@@ -15,28 +15,26 @@ extern "C"
 #include <dirent.h>
 #include <chrono>
 
-
 using namespace std::chrono;
 using namespace std;
 
 #define NEXT_VIDEO 1
 #define PREVIOUS_VIDEO 2
-#define END 3
 
 void free_memory(AVFormatContext **, AVPacket *, AVFrame **, AVIOContext **, AVFormatContext **, AVCodecContext **, AVCodecContext **);
 void recursive_roam(DIR **, const char *, struct dirent **, std::vector<string> *);
-bool contains(char* str, char* extension)
+bool contains(char *str, char *extension)
 {
-    int cpt = strlen(extension)-1;
+    int cpt = strlen(extension) - 1;
     while (*str != '.')
     {
-        char temp = *str < 'a' ? (*str)+32 : *str;
-        if ( temp != *(extension+cpt))
+        char temp = *str < 'a' ? (*str) + 32 : *str;
+        if (temp != *(extension + cpt))
             return false;
         cpt--;
         str--;
     }
-   
+
     return true;
 }
 uint64_t timeSinceEpochMillisec()
@@ -49,7 +47,7 @@ int main(int argc, char **argv)
 {
     freopen("/dev/null", "w", stderr);
     freopen("CON", "w", stdout);
-    
+
     if (!argv[1])
     {
         fprintf(stderr, "Veuillez specifier un chemin de fichier");
@@ -59,18 +57,19 @@ int main(int argc, char **argv)
     av_register_all();
     avfilter_register_all();
     srand(time(NULL));
-    
-    int pause = 0,got_picture = -1,got_audio = -1, index = 0;
-    
+
+    int pause = 0, got_picture = -1, got_audio = -1, index = 0;
+
     AVFormatContext *format_ctx_input = NULL, *format_ctx_output = NULL;
     AVCodec *codec = NULL, *codec_audio = NULL;
     AVCodecContext *codec_ctx, *codec_ctx_audio;
     AVOutputFormat *output_format = NULL;
     AVFrame *frame;
     AVPacket pkt;
-    AVStream *stream = NULL, *stream_audio = NULL;
     SDL_Event event;
-    
+    std::vector<string> vec = {};
+    DIR *dir;
+    struct dirent *ent;
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER))
     {
@@ -78,11 +77,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    std::vector<string> vec = {};
-    DIR *dir;
-    struct dirent *ent;
-    const char *parent_folders = argv[1];
-    recursive_roam(&dir, parent_folders, &ent, &vec);
+    recursive_roam(&dir, argv[1], &ent, &vec);
 
     if (vec.size() == 0)
     {
@@ -94,8 +89,13 @@ int main(int argc, char **argv)
         const char *input_filename = vec[index].c_str();
         string output = "videos/" + to_string(index) + ".mp4";
         const char *output_filename = output.c_str();
-        
+
         format_ctx_input = avformat_alloc_context();
+        av_init_packet(&pkt);
+        frame = av_frame_alloc();
+        codec_ctx = avcodec_alloc_context3(codec);
+        codec_ctx_audio = avcodec_alloc_context3(codec_audio);
+
         if (avformat_open_input(&format_ctx_input, input_filename, NULL, NULL) != 0)
         {
             fprintf(stderr, "erreur lors de l'ouverture du fichier");
@@ -103,13 +103,8 @@ int main(int argc, char **argv)
 
             continue;
         }
-
-        codec_ctx = avcodec_alloc_context3(codec);
-        codec_ctx_audio = avcodec_alloc_context3(codec_audio);
-        
-
-        auto videoStream = -1;
-        auto audioStream = -1;
+        int videoStream = -1;
+        int audioStream = -1;
         for (int i = 0; i < format_ctx_input->nb_streams; i++)
         {
             if (format_ctx_input->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && videoStream == -1)
@@ -136,13 +131,9 @@ int main(int argc, char **argv)
 
         if (avcodec_open2(codec_ctx, codec, NULL) != 0)
         {
-
             fprintf(stderr, "erreur lors de l'ouverture du codec");
             continue;
         }
-        av_init_packet(&pkt);
-
-        frame = av_frame_alloc();
 
         output_format = av_guess_format(NULL, output_filename, NULL);
         avformat_alloc_output_context2(&format_ctx_output, output_format, NULL, output_filename);
@@ -156,19 +147,7 @@ int main(int argc, char **argv)
             return -1;
         }
         format_ctx_output->pb = avio_ctx;
-        stream = avformat_new_stream(format_ctx_output, codec);
-        stream_audio = avformat_new_stream(format_ctx_output, codec_audio);
 
-        avcodec_parameters_from_context(stream_audio->codecpar, codec_ctx_audio);
-
-        if (format_ctx_output->oformat->flags & AVFMT_GLOBALHEADER)
-        {
-            codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-        }
-
-        avcodec_parameters_from_context(stream->codecpar, codec_ctx);
-        stream->codec->time_base.num = format_ctx_input->streams[videoStream]->time_base.num;
-        stream->codec->time_base.den = format_ctx_input->streams[videoStream]->time_base.den;
         avformat_write_header(format_ctx_output, NULL);
 
         atexit(SDL_Quit);
@@ -246,11 +225,7 @@ int main(int argc, char **argv)
             {
                 last = timeSinceEpochMillisec();
                 avcodec_decode_video2(codec_ctx, frame, &got_picture, &pkt);
-                const double frameDuration = (1000.0 / (format_ctx_input->streams[videoStream]->r_frame_rate.num / format_ctx_input->streams[videoStream]->r_frame_rate.den));
-                uint64_t delay = timeSinceEpochMillisec() - last;
-                if (frameDuration > delay)
-                    Sleep(frameDuration - delay);
-                
+
                 SDL_Rect rect;
 
                 if (got_picture == 1)
@@ -276,15 +251,18 @@ int main(int argc, char **argv)
                     rect.h = codec_ctx->height;
 
                     SDL_DisplayYUVOverlay(bmp, &rect);
+
+                    const double frameDuration = (1000.0 / (format_ctx_input->streams[videoStream]->r_frame_rate.num / format_ctx_input->streams[videoStream]->r_frame_rate.den));
+                    uint64_t delay = timeSinceEpochMillisec() - last;
+
+                    if (frameDuration > delay)
+                        Sleep(frameDuration - delay);
+
                     if (lastDisplayed != NULL)
                         cout << 1000.0 / (timeSinceEpochMillisec() - lastDisplayed) << " fps" << endl;
 
                     lastDisplayed = timeSinceEpochMillisec();
                 }
-                if (pkt.pts != AV_NOPTS_VALUE)
-                    pkt.pts = av_rescale_q(pkt.pts, stream->codec->time_base, stream->time_base);
-                if (pkt.dts != AV_NOPTS_VALUE)
-                    pkt.dts = av_rescale_q(pkt.dts, stream->codec->time_base, stream->time_base);
 
                 av_interleaved_write_frame(format_ctx_output, &pkt);
             }
@@ -304,7 +282,7 @@ int main(int argc, char **argv)
             else
                 index = 0;
         }
-        if (quit == PREVIOUS_VIDEO)
+        else if (quit == PREVIOUS_VIDEO)
         {
             if (index > 0)
                 index--;
@@ -315,8 +293,6 @@ int main(int argc, char **argv)
         SDL_FreeYUVOverlay(bmp);
         av_write_trailer(format_ctx_output);
         free_memory(&format_ctx_output, &pkt, &frame, &avio_ctx, &format_ctx_input, &codec_ctx, &codec_ctx_audio);
-        if (quit == END)
-            break;
     }
 
     return 0;
@@ -342,7 +318,7 @@ void recursive_roam(DIR **dir, const char *parent, struct dirent **ent, std::vec
 
                 recursive_roam(&d, parent_fold.c_str(), &ent2, &(*vec));
             }
-            else if (s[s.size() - 1] != '.'  && !contains(&s[s.length()-1],"jpeg") && !contains(&s[s.length()-1],"jpg") && !contains(&s[s.length()-1],"png") )
+            else if (s[s.size() - 1] != '.' && !contains(&s[s.length() - 1], "jpeg") && !contains(&s[s.length() - 1], "jpg") && !contains(&s[s.length() - 1], "png"))
             {
                 std::cout << "\tfichier: " + s << endl;
                 p = p + s;
