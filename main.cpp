@@ -128,8 +128,8 @@ int main(int argc, char **argv)
         }
         //av_dump_format(format_ctx_input, 0,input_filename,0);
 
-        avcodec_copy_context(codec_ctx, format_ctx_input->streams[videoStream]->codec);       // (destination , source)
-        avcodec_copy_context(codec_ctx_audio, format_ctx_input->streams[audioStream]->codec); // (destination , source)
+        avcodec_parameters_to_context(codec_ctx, format_ctx_input->streams[videoStream]->codecpar);       // (destination , source)
+        avcodec_parameters_to_context(codec_ctx_audio, format_ctx_input->streams[audioStream]->codecpar); // (destination , source)
 
         codec = avcodec_find_decoder(codec_ctx->codec_id);
         codec_audio = avcodec_find_decoder(codec_ctx_audio->codec_id);
