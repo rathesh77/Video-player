@@ -267,7 +267,7 @@ int main(int argc, char **argv)
 
                     SDL_DisplayYUVOverlay(bmp, &rect);
                     if (lastDisplayed != NULL)
-                        cout << 1000.0 / (timeSinceEpochMillisec() - lastDisplayed) << endl;
+                        cout << 1000.0 / (timeSinceEpochMillisec() - lastDisplayed) << " fps"<<endl;
 
                     lastDisplayed = timeSinceEpochMillisec();
                 }
