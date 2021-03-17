@@ -1,0 +1,12 @@
+bin/
+img/back.jpeg
+img/cb.bmp
+videos/
+ffmpeg.exe
+obj
+dossier/*
+std*
+bash*
+frame*
+*.mp4
+.vscode
