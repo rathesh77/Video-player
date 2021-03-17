@@ -10,3 +10,4 @@ bash*
 frame*
 *.mp4
 .vscode
+Makefile
