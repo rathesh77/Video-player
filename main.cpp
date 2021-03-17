@@ -22,12 +22,13 @@ extern "C"
 
 using namespace std::chrono;
 using namespace std;
-void free_memory(AVFormatContext **, AVPacket *, AVFrame **, AVIOContext **, AVFormatContext **, AVCodecContext **, AVCodecContext **);
-void recursive_roam(DIR **, const char *, struct dirent **, std::vector<string> *);
 
 #define NEXT_VIDEO 1
 #define PREVIOUS_VIDEO 2
 #define END 3
+
+void free_memory(AVFormatContext **, AVPacket *, AVFrame **, AVIOContext **, AVFormatContext **, AVCodecContext **, AVCodecContext **);
+void recursive_roam(DIR **, const char *, struct dirent **, std::vector<string> *);
 
 uint64_t timeSinceEpochMillisec()
 {
@@ -267,7 +268,7 @@ int main(int argc, char **argv)
 
                     SDL_DisplayYUVOverlay(bmp, &rect);
                     if (lastDisplayed != NULL)
-                        cout << 1000.0 / (timeSinceEpochMillisec() - lastDisplayed) << " fps"<<endl;
+                        cout << 1000.0 / (timeSinceEpochMillisec() - lastDisplayed) << " fps" << endl;
 
                     lastDisplayed = timeSinceEpochMillisec();
                 }
