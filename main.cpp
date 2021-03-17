@@ -80,7 +80,7 @@ int main(int argc, char **argv)
     int tab[3000] = {0};
     while (true)
     {
-
+        cout<<vec[index].c_str()<<endl;
         const char *input_filename = vec[index].c_str();
         string sortie = "videos/" + to_string(index) + ".mp4";
         const char *output_filename = sortie.c_str();
@@ -345,16 +345,16 @@ void recursive_roam(DIR **dir, const char *parent, struct dirent **ent, std::vec
 
                 recursive_roam(&d, parent_fold.c_str(), &ent2, &(*vec));
             }
-            else if (s[s.size() - 1] != '.' && s.find(".jpg", 0) == string::npos && s.find(".png", 0) == string::npos)
+            else if (s[s.size() - 1] != '.' && s.find(".jpeg", 0) == string::npos && s.find(".jpg", 0) == string::npos && s.find(".png", 0) == string::npos)
             {
                 std::cout << "\tfichier mp4: " + s << endl;
-            }
-            else
-                continue;
-
-            p = p + s;
+                p = p + s;
 
             vec->push_back(p);
+            }
+            
+
+            
         }
         closedir(*dir);
     }
