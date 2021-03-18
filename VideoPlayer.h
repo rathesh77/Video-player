@@ -39,12 +39,12 @@ private:
     void recursive_roam(const char *);
     void alloc_contexts();
     void fill_overlay(SDL_Overlay *, int, uint64_t *, struct SwsContext *, int, int, uint64_t);
+    bool fill_input_codecs(int *, int *);
+    void read_inputs(int *);
 
 public:
     VideoPlayer(char *);
     bool contains(char *, char *);
-    bool fill_input_codecs(int *, int *);
-    void read_inputs(int *);
     int loop();
     uint64_t timeSinceEpochMillisec();
     string get_file_extension(char *c);

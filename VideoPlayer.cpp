@@ -11,118 +11,6 @@ VideoPlayer::VideoPlayer(char *folder)
 
     recursive_roam(folder);
 }
-
-bool VideoPlayer::contains(char *str, char *extension)
-{
-    int cpt = strlen(extension) - 1;
-    while (*str != '.')
-    {
-        char temp = *str < 'a' && *str > '9' ? (*str) + 32 : *str;
-        if (temp != *(extension + cpt))
-            return false;
-        cpt--;
-        str--;
-    }
-
-    return true;
-}
-uint64_t VideoPlayer::timeSinceEpochMillisec()
-{
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-}
-
-void VideoPlayer::alloc_contexts()
-{
-    format_ctx_input = avformat_alloc_context();
-    av_init_packet(&pkt);
-    frame = av_frame_alloc();
-    codec_ctx = avcodec_alloc_context3(codec);
-    codec_ctx_audio = avcodec_alloc_context3(codec_audio);
-}
-
-void VideoPlayer::fill_overlay(SDL_Overlay *bmp, int got_picture, uint64_t *last_displayed, struct SwsContext *sws_ctx, int videoStream, int audioStream, uint64_t last)
-{
-    SDL_Rect rect;
-
-    if (got_picture == 1)
-    {
-        SDL_LockYUVOverlay(bmp);
-        AVPicture pict;
-        pict.data[0] = bmp->pixels[0];
-        pict.data[1] = bmp->pixels[2];
-        pict.data[2] = bmp->pixels[1];
-
-        pict.linesize[0] = bmp->pitches[0];
-        pict.linesize[1] = bmp->pitches[2];
-        pict.linesize[2] = bmp->pitches[1];
-
-        sws_scale(sws_ctx, (uint8_t const *const *)frame->data,
-                  frame->linesize, 0, codec_ctx->height,
-                  pict.data, pict.linesize);
-
-        SDL_UnlockYUVOverlay(bmp);
-        rect.x = 0;
-        rect.y = 0;
-        rect.h = 1080;
-        rect.w = rect.h * codec_ctx->width / codec_ctx->height;
-        rect.x = (1920 - rect.w) / 2;
-
-        SDL_DisplayYUVOverlay(bmp, &rect);
-
-        const double frameDuration = (1000.0 / (format_ctx_input->streams[videoStream]->r_frame_rate.num / format_ctx_input->streams[videoStream]->r_frame_rate.den));
-        uint64_t delay = timeSinceEpochMillisec() - last;
-
-        if (frameDuration > delay)
-            Sleep(frameDuration - delay);
-
-        if (last_displayed != NULL)
-            cout << 1000.0 / (timeSinceEpochMillisec() - *last_displayed) << " fps" << endl;
-
-        *last_displayed = timeSinceEpochMillisec();
-    }
-}
-bool VideoPlayer::fill_input_codecs(int *videoStream, int *audioStream)
-{
-    for (int i = 0; i < format_ctx_input->nb_streams; i++)
-    {
-        if (format_ctx_input->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && *videoStream == -1)
-        {
-            *videoStream = i;
-        }
-        else if (format_ctx_input->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO && *audioStream == -1)
-        {
-            *audioStream = i;
-        }
-    }
-    if (*videoStream == -1 || *audioStream == -1)
-    {
-        files.erase(files.begin() + index);
-        return false;
-    }
-
-    avcodec_parameters_to_context(codec_ctx, format_ctx_input->streams[*videoStream]->codecpar);       // (destination , source)
-    avcodec_parameters_to_context(codec_ctx_audio, format_ctx_input->streams[*audioStream]->codecpar); // (destination , source)
-    codec = avcodec_find_decoder(codec_ctx->codec_id);
-    codec_audio = avcodec_find_decoder(codec_ctx_audio->codec_id);
-
-    if (avcodec_open2(codec_ctx, codec, NULL) != 0)
-    {
-        fprintf(stderr, "erreur lors de l'ouverture du codec");
-        return false;
-    }
-    return true;
-}
-string VideoPlayer::get_file_extension(char *c)
-{
-    string out = "";
-    while (*c != '.')
-    {
-        out = *c + out;
-        c--;
-    }
-    return "." + out;
-}
-
 int VideoPlayer::loop()
 {
     int got_picture = -1;
@@ -256,7 +144,114 @@ int VideoPlayer::loop()
         }
     }
 }
+bool VideoPlayer::contains(char *str, char *extension)
+{
+    int cpt = strlen(extension) - 1;
+    while (*str != '.')
+    {
+        char temp = *str < 'a' && *str > '9' ? (*str) + 32 : *str;
+        if (temp != *(extension + cpt))
+            return false;
+        cpt--;
+        str--;
+    }
 
+    return true;
+}
+uint64_t VideoPlayer::timeSinceEpochMillisec()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+void VideoPlayer::alloc_contexts()
+{
+    format_ctx_input = avformat_alloc_context();
+    av_init_packet(&pkt);
+    frame = av_frame_alloc();
+    codec_ctx = avcodec_alloc_context3(codec);
+    codec_ctx_audio = avcodec_alloc_context3(codec_audio);
+}
+void VideoPlayer::fill_overlay(SDL_Overlay *bmp, int got_picture, uint64_t *last_displayed, struct SwsContext *sws_ctx, int videoStream, int audioStream, uint64_t last)
+{
+    SDL_Rect rect;
+
+    if (got_picture == 1)
+    {
+        SDL_LockYUVOverlay(bmp);
+        AVPicture pict;
+        pict.data[0] = bmp->pixels[0];
+        pict.data[1] = bmp->pixels[2];
+        pict.data[2] = bmp->pixels[1];
+
+        pict.linesize[0] = bmp->pitches[0];
+        pict.linesize[1] = bmp->pitches[2];
+        pict.linesize[2] = bmp->pitches[1];
+
+        sws_scale(sws_ctx, (uint8_t const *const *)frame->data,
+                  frame->linesize, 0, codec_ctx->height,
+                  pict.data, pict.linesize);
+
+        SDL_UnlockYUVOverlay(bmp);
+        rect.x = 0;
+        rect.y = 0;
+        rect.h = 1080;
+        rect.w = rect.h * codec_ctx->width / codec_ctx->height;
+        rect.x = (1920 - rect.w) / 2;
+
+        SDL_DisplayYUVOverlay(bmp, &rect);
+
+        const double frameDuration = (1000.0 / (format_ctx_input->streams[videoStream]->r_frame_rate.num / format_ctx_input->streams[videoStream]->r_frame_rate.den));
+        uint64_t delay = timeSinceEpochMillisec() - last;
+
+        if (frameDuration > delay)
+            Sleep(frameDuration - delay);
+
+        if (last_displayed != NULL)
+            cout << 1000.0 / (timeSinceEpochMillisec() - *last_displayed) << " fps" << endl;
+
+        *last_displayed = timeSinceEpochMillisec();
+    }
+}
+bool VideoPlayer::fill_input_codecs(int *videoStream, int *audioStream)
+{
+    for (int i = 0; i < format_ctx_input->nb_streams; i++)
+    {
+        if (format_ctx_input->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && *videoStream == -1)
+        {
+            *videoStream = i;
+        }
+        else if (format_ctx_input->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO && *audioStream == -1)
+        {
+            *audioStream = i;
+        }
+    }
+    if (*videoStream == -1 || *audioStream == -1)
+    {
+        files.erase(files.begin() + index);
+        return false;
+    }
+
+    avcodec_parameters_to_context(codec_ctx, format_ctx_input->streams[*videoStream]->codecpar);       // (destination , source)
+    avcodec_parameters_to_context(codec_ctx_audio, format_ctx_input->streams[*audioStream]->codecpar); // (destination , source)
+    codec = avcodec_find_decoder(codec_ctx->codec_id);
+    codec_audio = avcodec_find_decoder(codec_ctx_audio->codec_id);
+
+    if (avcodec_open2(codec_ctx, codec, NULL) != 0)
+    {
+        fprintf(stderr, "erreur lors de l'ouverture du codec");
+        return false;
+    }
+    return true;
+}
+string VideoPlayer::get_file_extension(char *c)
+{
+    string out = "";
+    while (*c != '.')
+    {
+        out = *c + out;
+        c--;
+    }
+    return "." + out;
+}
 void VideoPlayer::recursive_roam(const char *parent)
 {
     struct dirent *ent = NULL;
