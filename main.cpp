@@ -66,6 +66,7 @@ int main(int argc, char **argv)
     AVOutputFormat *output_format = NULL;
     AVFrame *frame;
     AVPacket pkt;
+    AVStream *stream = NULL, *stream_audio = NULL;
     SDL_Event event;
     std::vector<string> vec = {};
     DIR *dir;
@@ -147,13 +148,25 @@ int main(int argc, char **argv)
             return -1;
         }
         format_ctx_output->pb = avio_ctx;
+        stream = avformat_new_stream(format_ctx_output, codec);
+        stream_audio = avformat_new_stream(format_ctx_output, codec_audio);
 
+        avcodec_parameters_from_context(stream_audio->codecpar, codec_ctx_audio);
+
+        if (format_ctx_output->oformat->flags & AVFMT_GLOBALHEADER)
+        {
+            codec_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+        }
+
+        avcodec_parameters_from_context(stream->codecpar, codec_ctx);
+        stream->codec->time_base.num = format_ctx_input->streams[videoStream]->time_base.num;
+        stream->codec->time_base.den = format_ctx_input->streams[videoStream]->time_base.den;
         avformat_write_header(format_ctx_output, NULL);
 
         atexit(SDL_Quit);
 
         SDL_Surface *screen = SDL_SetVideoMode(codec_ctx->width, codec_ctx->height, 0,
-                                               SDL_HWSURFACE | SDL_DOUBLEBUF);
+                                               SDL_HWSURFACE | SDL_DOUBLEBUF );
         SDL_WM_SetCaption("MP4 Video Player", NULL);
         if (!screen)
         {
@@ -263,7 +276,10 @@ int main(int argc, char **argv)
 
                     lastDisplayed = timeSinceEpochMillisec();
                 }
-
+                if (pkt.pts != AV_NOPTS_VALUE)
+                    pkt.pts = av_rescale_q(pkt.pts, stream->codec->time_base, stream->time_base);
+                if (pkt.dts != AV_NOPTS_VALUE)
+                    pkt.dts = av_rescale_q(pkt.dts, stream->codec->time_base, stream->time_base);
                 av_interleaved_write_frame(format_ctx_output, &pkt);
             }
             else if (pkt.stream_index == audioStream)
