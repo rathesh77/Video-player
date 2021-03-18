@@ -65,8 +65,8 @@ int VideoPlayer::loop()
 
         atexit(SDL_Quit);
 
-        SDL_Surface *screen = SDL_SetVideoMode(1920, 1080, 0,
-                                               SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_FULLSCREEN);
+        screen = SDL_SetVideoMode(width, height, 0,
+                                  SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_RESIZABLE);
         SDL_WM_SetCaption("MP4 Video Player", NULL);
         if (!screen)
         {
@@ -92,7 +92,10 @@ int VideoPlayer::loop()
                                  NULL);
 
         SDL_Flip(screen);
-
+        rect.y = 0;
+        rect.h = screen->h;
+        rect.w = rect.h * codec_ctx->width / codec_ctx->height;
+        rect.x = (screen->w / 2) - (rect.w/2);
         while (av_read_frame(format_ctx_input, &pkt) == 0 && quit == 0)
         {
             read_inputs(&quit);
@@ -172,7 +175,6 @@ void VideoPlayer::alloc_contexts()
 }
 void VideoPlayer::fill_overlay(SDL_Overlay *bmp, int got_picture, uint64_t *last_displayed, struct SwsContext *sws_ctx, int videoStream, int audioStream, uint64_t last)
 {
-    SDL_Rect rect;
 
     if (got_picture == 1)
     {
@@ -191,11 +193,6 @@ void VideoPlayer::fill_overlay(SDL_Overlay *bmp, int got_picture, uint64_t *last
                   pict.data, pict.linesize);
 
         SDL_UnlockYUVOverlay(bmp);
-        rect.x = 0;
-        rect.y = 0;
-        rect.h = 1080;
-        rect.w = rect.h * codec_ctx->width / codec_ctx->height;
-        rect.x = (1920 - rect.w) / 2;
 
         SDL_DisplayYUVOverlay(bmp, &rect);
 
@@ -205,9 +202,9 @@ void VideoPlayer::fill_overlay(SDL_Overlay *bmp, int got_picture, uint64_t *last
         if (frameDuration > delay)
             Sleep(frameDuration - delay);
 
-        if (last_displayed != NULL)
+        /*if (last_displayed != NULL)
             cout << 1000.0 / (timeSinceEpochMillisec() - *last_displayed) << " fps" << endl;
-
+*/
         *last_displayed = timeSinceEpochMillisec();
     }
 }
@@ -304,6 +301,17 @@ void VideoPlayer::read_inputs(int *quit)
 
     switch (event.type)
     {
+    case SDL_VIDEORESIZE:
+        width = event.resize.w;
+        height = event.resize.h;
+        screen =  SDL_SetVideoMode(width, height, 0,
+                                  SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_RESIZABLE);
+        rect.h = height;
+        rect.w = rect.h * codec_ctx->width / codec_ctx->height;
+        rect.x =  (width / 2) - (rect.w/2);
+        SDL_FillRect(screen, NULL, 0x00000000);
+        SDL_Flip(screen);
+        break;
     case SDL_KEYDOWN:
         switch (event.key.keysym.sym)
         {
