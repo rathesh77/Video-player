@@ -21,8 +21,8 @@ using namespace std;
 #define NEXT_VIDEO 1
 #define PREVIOUS_VIDEO 2
 
-void free_memory(AVFormatContext **, AVPacket *, AVFrame **, AVIOContext **, AVFormatContext **, AVCodecContext **, AVCodecContext **);
-void recursive_roam(DIR **, const char *, struct dirent **, std::vector<string> *);
+void free_memory(AVFormatContext *, AVPacket *, AVFrame *, AVIOContext *, AVFormatContext *, AVCodecContext *, AVCodecContext *);
+void recursive_roam(DIR *, const char *, struct dirent *, std::vector<string> *);
 bool contains(char *str, char *extension)
 {
     int cpt = strlen(extension) - 1;
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    recursive_roam(&dir, argv[1], &ent, &vec);
+    recursive_roam(dir, argv[1], ent, &vec);
 
     if (vec.size() == 0)
     {
@@ -308,22 +308,22 @@ int main(int argc, char **argv)
 
         SDL_FreeYUVOverlay(bmp);
         av_write_trailer(format_ctx_output);
-        free_memory(&format_ctx_output, &pkt, &frame, &avio_ctx, &format_ctx_input, &codec_ctx, &codec_ctx_audio);
+        free_memory(format_ctx_output, &pkt, frame, avio_ctx, format_ctx_input, codec_ctx, codec_ctx_audio);
     }
 
     return 0;
 }
-void recursive_roam(DIR **dir, const char *parent, struct dirent **ent, std::vector<string> *vec)
+void recursive_roam(DIR *dir, const char *parent, struct dirent *ent, std::vector<string> *vec)
 {
 
-    if ((*dir = opendir(parent)) != NULL)
+    if ((dir = opendir(parent)) != NULL)
     {
-        while ((*ent = readdir(*dir)) != NULL)
+        while ((ent = readdir(dir)) != NULL)
         {
             string p = parent;
-            string s = (*ent)->d_name;
+            string s = ent->d_name;
 
-            if (s[s.size() - 1] != '.' && (*ent)->d_type == 16)
+            if (s[s.size() - 1] != '.' && ent->d_type == 16)
             {
                 std::cout << "Dossier: " + s << endl;
                 DIR *d;
@@ -332,7 +332,7 @@ void recursive_roam(DIR **dir, const char *parent, struct dirent **ent, std::vec
 
                 parent_fold += s + '/';
 
-                recursive_roam(&d, parent_fold.c_str(), &ent2, &(*vec));
+                recursive_roam(d, parent_fold.c_str(), ent2, vec);
             }
             else if (s[s.size() - 1] != '.' && !contains(&s[s.length() - 1], "jpeg") && !contains(&s[s.length() - 1], "jpg") && !contains(&s[s.length() - 1], "png"))
             {
@@ -342,17 +342,17 @@ void recursive_roam(DIR **dir, const char *parent, struct dirent **ent, std::vec
                 vec->push_back(p);
             }
         }
-        closedir(*dir);
+        closedir(dir);
     }
 }
-void free_memory(AVFormatContext **format_ctx_output, AVPacket *pkt, AVFrame **frame, AVIOContext **avio_ctx, AVFormatContext **format_ctx_input, AVCodecContext **codec_ctx, AVCodecContext **codec_ctx_audio)
+void free_memory(AVFormatContext *format_ctx_output, AVPacket *pkt, AVFrame *frame, AVIOContext *avio_ctx, AVFormatContext *format_ctx_input, AVCodecContext *codec_ctx, AVCodecContext *codec_ctx_audio)
 {
-    avcodec_free_context(&(*codec_ctx));
-    avcodec_free_context(&(*codec_ctx_audio));
+    avcodec_free_context(&codec_ctx);
+    avcodec_free_context(&codec_ctx_audio);
     av_packet_unref(pkt);
-    av_frame_unref(*frame);
-    av_frame_free(frame);
-    avio_close(*avio_ctx);
-    avformat_free_context(*format_ctx_output);
-    avformat_free_context(*format_ctx_input);
+    av_frame_unref(frame);
+    av_frame_free(&frame);
+    avio_close(avio_ctx);
+    avformat_free_context(format_ctx_output);
+    avformat_free_context(format_ctx_input);
 }
