@@ -2,7 +2,6 @@ bin/
 img/back.jpeg
 img/cb.bmp
 videos/
-ffmpeg.exe
 obj
 dossier/*
 std*
@@ -11,3 +10,4 @@ frame*
 *.mp4
 .vscode
 Makefile
+ffmpeg.*
