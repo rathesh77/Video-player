@@ -1,7 +1,6 @@
 #include <time.h>
 #include <vector>
 #include <SDL/SDL.h>
-#include <SDL/SDL_image.h>
 extern "C"
 {
 #include <libavcodec/avcodec.h>
@@ -31,9 +30,11 @@ private:
     AVIOContext *avio_ctx = NULL;
     AVFrame *frame;
     AVPacket pkt;
+    SDL_Rect rect;
     AVStream *stream = NULL, *stream_audio = NULL;
     std::vector<string> files = {};
-    int index = 0;
+    int index = 0, width = 1024, height = 768;
+    SDL_Surface *screen = NULL;
     
     void free_memory();
     void recursive_roam(const char *);
