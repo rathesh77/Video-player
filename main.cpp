@@ -12,13 +12,13 @@ int main(int argc, char **argv)
     freopen("CON", "w", stdout);
     srand(time(NULL));
 
-    if (!argv[1])
-    {
-        fprintf(stderr, "Veuillez specifier un chemin de fichier");
-        return -1;
-    }
-    VideoPlayer p(argv[1]);
-    p.loop();
-    return 0;
+    cout<<"entrer un chemin de dossier absolu"<<endl;
+    char **path;
+    cin>>*path;
 
+    VideoPlayer *p = new VideoPlayer(*path);
+    p->loop();
+    delete p;
+
+    return 0;
 }

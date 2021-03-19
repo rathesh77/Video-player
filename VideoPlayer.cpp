@@ -13,6 +13,8 @@ VideoPlayer::VideoPlayer(char *folder)
 }
 int VideoPlayer::loop()
 {
+    if (files.empty())
+        return -1;
     int got_picture = -1;
     uint64_t last = NULL, last_displayed = NULL;
 
@@ -95,7 +97,7 @@ int VideoPlayer::loop()
         rect.y = 0;
         rect.h = screen->h;
         rect.w = rect.h * codec_ctx->width / codec_ctx->height;
-        rect.x = (screen->w / 2) - (rect.w/2);
+        rect.x = (screen->w / 2) - (rect.w / 2);
         while (av_read_frame(format_ctx_input, &pkt) == 0 && quit == 0)
         {
             read_inputs(&quit);
@@ -202,9 +204,9 @@ void VideoPlayer::fill_overlay(SDL_Overlay *bmp, int got_picture, uint64_t *last
         if (frameDuration > delay)
             Sleep(frameDuration - delay);
 
-        /*if (last_displayed != NULL)
+        if (last_displayed != NULL)
             cout << 1000.0 / (timeSinceEpochMillisec() - *last_displayed) << " fps" << endl;
-*/
+
         *last_displayed = timeSinceEpochMillisec();
     }
 }
@@ -304,11 +306,11 @@ void VideoPlayer::read_inputs(int *quit)
     case SDL_VIDEORESIZE:
         width = event.resize.w;
         height = event.resize.h;
-        screen =  SDL_SetVideoMode(width, height, 0,
+        screen = SDL_SetVideoMode(width, height, 0,
                                   SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_RESIZABLE);
         rect.h = height;
         rect.w = rect.h * codec_ctx->width / codec_ctx->height;
-        rect.x =  (width / 2) - (rect.w/2);
+        rect.x = (width / 2) - (rect.w / 2);
         SDL_FillRect(screen, NULL, 0x00000000);
         SDL_Flip(screen);
         break;
