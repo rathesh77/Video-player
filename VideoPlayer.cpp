@@ -311,7 +311,6 @@ void VideoPlayer::read_inputs(int *quit)
         rect.h = height;
         rect.w = rect.h * codec_ctx->width / codec_ctx->height;
         rect.x = (width / 2) - (rect.w / 2);
-        SDL_FillRect(screen, NULL, 0x00000000);
         SDL_Flip(screen);
         break;
     case SDL_KEYDOWN:
