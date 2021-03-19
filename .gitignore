@@ -1,7 +1,9 @@
 bin/
 img/back.jpeg
 img/cb.bmp
-videos/
+videos/*.mp4
+videos/*.mov
+
 obj
 dossier/*
 std*
