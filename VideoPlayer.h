@@ -14,8 +14,6 @@ extern "C"
 #include <dirent.h>
 #include <chrono>
 
-using namespace std;
-
 #define NEXT_VIDEO 1
 #define PREVIOUS_VIDEO 2
 #define QUIT 3
@@ -32,10 +30,10 @@ private:
     AVPacket pkt;
     SDL_Rect rect;
     AVStream *stream = NULL, *stream_audio = NULL;
-    std::vector<string> files = {};
+    std::vector<std::string> files = {};
     int index = 0, width = 1024, height = 768;
     SDL_Surface *screen = NULL;
-    
+
     void free_memory();
     void recursive_roam(const char *);
     void alloc_contexts();
@@ -48,5 +46,5 @@ public:
     bool contains(char *, char *);
     int loop();
     uint64_t timeSinceEpochMillisec();
-    string get_file_extension(char *c);
+    std::string get_file_extension(char *c);
 };

@@ -22,7 +22,7 @@ int VideoPlayer::loop()
     {
         int quit = 0, videoStream = -1, audioStream = -1;
         const char *input_filename = files[index].c_str();
-        string output = "videos/" + to_string(index) + get_file_extension(&files[index][files[index].length() - 1]);
+        std::string output = "videos/" + std::to_string(index) + get_file_extension(&files[index][files[index].length() - 1]);
         const char *output_filename = output.c_str();
 
         alloc_contexts();
@@ -205,7 +205,7 @@ void VideoPlayer::fill_overlay(SDL_Overlay *bmp, int got_picture, uint64_t *last
             Sleep(frameDuration - delay);
 
         if (last_displayed != NULL)
-            cout << 1000.0 / (timeSinceEpochMillisec() - *last_displayed) << " fps" << endl;
+            std::cout << 1000.0 / (timeSinceEpochMillisec() - *last_displayed) << " fps" << std::endl;
 
         *last_displayed = timeSinceEpochMillisec();
     }
@@ -241,9 +241,9 @@ bool VideoPlayer::fill_input_codecs(int *videoStream, int *audioStream)
     }
     return true;
 }
-string VideoPlayer::get_file_extension(char *c)
+std::string VideoPlayer::get_file_extension(char *c)
 {
-    string out = "";
+    std::string out = "";
     while (*c != '.')
     {
         out = *c + out;
@@ -259,14 +259,14 @@ void VideoPlayer::recursive_roam(const char *parent)
     {
         while ((ent = readdir(dir)) != NULL)
         {
-            string p = parent;
-            string s = ent->d_name;
+            std::string p = parent;
+            std::string s = ent->d_name;
 
             if (s[s.size() - 1] != '.' && ent->d_type == 16)
             {
-                std::cout << "Dossier: " + s << endl;
+                std::cout << "Dossier: " + s << std::endl;
                 DIR *d;
-                string parent_fold = parent;
+                std::string parent_fold = parent;
                 struct dirent *ent2;
 
                 parent_fold += s + '/';
@@ -275,7 +275,7 @@ void VideoPlayer::recursive_roam(const char *parent)
             }
             else if (s[s.size() - 1] != '.' && !contains(&s[s.length() - 1], "jpeg") && !contains(&s[s.length() - 1], "jpg") && !contains(&s[s.length() - 1], "png") && !contains(&s[s.length() - 1], "m4v"))
             {
-                std::cout << "\tfichier: " + s << endl;
+                std::cout << "\tfichier: " + s << std::endl;
                 p = p + s;
 
                 files.push_back(p);
