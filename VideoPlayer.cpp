@@ -273,7 +273,7 @@ void VideoPlayer::recursive_roam(const char *parent)
 
                 recursive_roam(parent_fold.c_str());
             }
-            else if (s[s.size() - 1] != '.' && !contains(&s[s.length() - 1], "jpeg") && !contains(&s[s.length() - 1], "jpg") && !contains(&s[s.length() - 1], "png") && !contains(&s[s.length() - 1], "m4v"))
+            else if (s[s.size() - 1] != '.' && (contains(&s[s.length() - 1], "mp4") || contains(&s[s.length() - 1], "mov") || contains(&s[s.length() - 1], "webm") ) )
             {
                 std::cout << "\tfichier: " + s << std::endl;
                 p = p + s;
