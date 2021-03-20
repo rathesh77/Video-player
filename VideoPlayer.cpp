@@ -39,7 +39,7 @@ int VideoPlayer::loop()
         {
             continue;
         }
-
+        av_dump_format(format_ctx_input,NULL,input_filename,0);
         avformat_alloc_output_context2(&format_ctx_output, av_guess_format(NULL, output_filename, NULL), NULL, output_filename);
 
         if (avio_open2(&avio_ctx, output_filename, AVIO_FLAG_WRITE, NULL, NULL) < 0)
@@ -264,21 +264,14 @@ void VideoPlayer::recursive_roam(const char *parent)
 
             if (s[s.size() - 1] != '.' && ent->d_type == 16)
             {
-                std::cout << "Dossier: " + s << std::endl;
-                DIR *d;
-                std::string parent_fold = parent;
-                struct dirent *ent2;
-
-                parent_fold += s + '/';
-
+                //std::cout << "Dossier: " + s << std::endl;
+                std::string parent_fold = p + s + '/';
                 recursive_roam(parent_fold.c_str());
             }
-            else if (s[s.size() - 1] != '.' && (contains(&s[s.length() - 1], "mp4") || contains(&s[s.length() - 1], "mov") || contains(&s[s.length() - 1], "webm") ) )
+            else if (s[s.size() - 1] != '.' && (contains(&s[s.length() - 1], "mp4") || contains(&s[s.length() - 1], "mov") || contains(&s[s.length() - 1], "webm") || contains(&s[s.length() - 1], "mkv")))
             {
-                std::cout << "\tfichier: " + s << std::endl;
-                p = p + s;
-
-                files.push_back(p);
+                //std::cout << "\tfichier: " + s << std::endl;
+                files.push_back(p + s);
             }
         }
         closedir(dir);
