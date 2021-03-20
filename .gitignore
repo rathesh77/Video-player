@@ -3,7 +3,7 @@ img/back.jpeg
 img/cb.bmp
 videos/*.mp4
 videos/*.mov
-
+videos/*.mkv
 obj
 dossier/*
 std*
