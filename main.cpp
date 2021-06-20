@@ -9,12 +9,11 @@ int main(int argc, char **argv)
     srand(time(NULL));
 
     std::cout << "entrer un chemin de dossier absolu" << std::endl;
-    char **path;
-    std::cin >> *path;
+    char *path;
+    std::cin >> path;
 
-    VideoPlayer *p = new VideoPlayer(*path);
+    VideoPlayer *p = new VideoPlayer(path);
     p->loop();
-    delete p;
 
     return 0;
 }

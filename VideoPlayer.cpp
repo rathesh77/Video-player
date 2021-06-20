@@ -35,11 +35,11 @@ int VideoPlayer::loop()
             continue;
         }
 
-        if (!fill_input_codecs(&videoStream, &audioStream))
+        if (!fill_input_codecs(videoStream, audioStream))
         {
             continue;
         }
-        av_dump_format(format_ctx_input,NULL,input_filename,0);
+        av_dump_format(format_ctx_input, NULL, input_filename, 0);
         avformat_alloc_output_context2(&format_ctx_output, av_guess_format(NULL, output_filename, NULL), NULL, output_filename);
 
         if (avio_open2(&avio_ctx, output_filename, AVIO_FLAG_WRITE, NULL, NULL) < 0)
@@ -100,7 +100,7 @@ int VideoPlayer::loop()
         rect.x = (screen->w / 2) - (rect.w / 2);
         while (av_read_frame(format_ctx_input, &pkt) == 0 && quit == 0)
         {
-            read_inputs(&quit);
+            read_inputs(quit);
 
             if (quit != 0)
                 break;
@@ -210,27 +210,27 @@ void VideoPlayer::fill_overlay(SDL_Overlay *bmp, int got_picture, uint64_t *last
         *last_displayed = timeSinceEpochMillisec();
     }
 }
-bool VideoPlayer::fill_input_codecs(int *videoStream, int *audioStream)
+bool VideoPlayer::fill_input_codecs(int &videoStream, int &audioStream)
 {
     for (int i = 0; i < format_ctx_input->nb_streams; i++)
     {
-        if (format_ctx_input->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && *videoStream == -1)
+        if (format_ctx_input->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && videoStream == -1)
         {
-            *videoStream = i;
+            videoStream = i;
         }
-        else if (format_ctx_input->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO && *audioStream == -1)
+        else if (format_ctx_input->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO && audioStream == -1)
         {
-            *audioStream = i;
+            audioStream = i;
         }
     }
-    if (*videoStream == -1 || *audioStream == -1)
+    if (videoStream == -1 || audioStream == -1)
     {
         files.erase(files.begin() + index);
         return false;
     }
 
-    avcodec_parameters_to_context(codec_ctx, format_ctx_input->streams[*videoStream]->codecpar);       // (destination , source)
-    avcodec_parameters_to_context(codec_ctx_audio, format_ctx_input->streams[*audioStream]->codecpar); // (destination , source)
+    avcodec_parameters_to_context(codec_ctx, format_ctx_input->streams[videoStream]->codecpar);       // (destination , source)
+    avcodec_parameters_to_context(codec_ctx_audio, format_ctx_input->streams[audioStream]->codecpar); // (destination , source)
     codec = avcodec_find_decoder(codec_ctx->codec_id);
     codec_audio = avcodec_find_decoder(codec_ctx_audio->codec_id);
 
@@ -251,11 +251,11 @@ std::string VideoPlayer::get_file_extension(char *c)
     }
     return "." + out;
 }
-void VideoPlayer::recursive_roam(const char *parent)
+void VideoPlayer::recursive_roam(std::string parent)
 {
     struct dirent *ent = NULL;
     DIR *dir = NULL;
-    if ((dir = opendir(parent)) != NULL)
+    if ((dir = opendir(parent.c_str())) != NULL)
     {
         while ((ent = readdir(dir)) != NULL)
         {
@@ -266,7 +266,7 @@ void VideoPlayer::recursive_roam(const char *parent)
             {
                 //std::cout << "Dossier: " + s << std::endl;
                 std::string parent_fold = p + s + '/';
-                recursive_roam(parent_fold.c_str());
+                recursive_roam(parent_fold);
             }
             else if (s[s.size() - 1] != '.' && (contains(&s[s.length() - 1], "mp4") || contains(&s[s.length() - 1], "mov") || contains(&s[s.length() - 1], "webm") || contains(&s[s.length() - 1], "mkv")))
             {
@@ -288,7 +288,7 @@ void VideoPlayer::free_memory()
     avformat_free_context(format_ctx_input);
     avio_close(avio_ctx);
 }
-void VideoPlayer::read_inputs(int *quit)
+void VideoPlayer::read_inputs(int &quit)
 {
     SDL_Event event;
 
@@ -310,18 +310,18 @@ void VideoPlayer::read_inputs(int *quit)
         switch (event.key.keysym.sym)
         {
         case SDLK_ESCAPE:
-            *quit = QUIT;
+            quit = QUIT;
             break;
         case SDLK_UP:
             index = rand() % ((files.size() - 1) - 0 + 1) + 0;
-            *quit = NEXT_VIDEO;
+            quit = NEXT_VIDEO;
             break;
         case SDLK_RIGHT:
-            *quit = NEXT_VIDEO;
+            quit = NEXT_VIDEO;
 
             break;
         case SDLK_LEFT:
-            *quit = PREVIOUS_VIDEO;
+            quit = PREVIOUS_VIDEO;
 
             break;
 
@@ -331,7 +331,7 @@ void VideoPlayer::read_inputs(int *quit)
         break;
     case SDL_QUIT:
 
-        *quit = QUIT;
+        quit = QUIT;
         break;
 
     default:

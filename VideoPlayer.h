@@ -35,11 +35,11 @@ private:
     SDL_Surface *screen = NULL;
 
     void free_memory();
-    void recursive_roam(const char *);
+    void recursive_roam(std::string);
     void alloc_contexts();
     void fill_overlay(SDL_Overlay *, int, uint64_t *, struct SwsContext *, int, int, uint64_t);
-    bool fill_input_codecs(int *, int *);
-    void read_inputs(int *);
+    bool fill_input_codecs(int &, int &);
+    void read_inputs(int &);
 
 public:
     VideoPlayer(char *);
