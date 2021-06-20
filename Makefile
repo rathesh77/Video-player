@@ -1,8 +1,8 @@
 # fichier Makefile 
 
-CPP=g++#compiler
-LDFLAGS=-lmingw32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer  -liconv -lavfilter -lavformat -lavcodec -lswscale -lavutil -lswresample -luser32 -lgdi32 -lwinmm -ldxguid 
-LDLIBS =-IC:/MinGW/include -IC:/MinGW/include/ffmpeg -LC:/MinGW/lib/ffmpeg -LC:/MinGW/lib/SDL -LC:/MinGW/lib/SDL_image -LC:/MinGW/lib/SDL_mixer
+CPP=C:/MinGW/bin/g++#compiler
+LDFLAGS=-lmingw32 -lSDLmain -lSDL -lSDL_image  -liconv -lavfilter -lavformat -lavcodec -lswscale -lavutil -lswresample -luser32 -lgdi32 -lwinmm -ldxguid 
+LDLIBS =-IC:/SDL/include -IC:/Ffmpeg/include -LC:/Ffmpeg/lib -LC:/SDL/lib -LC:/SDL_image/lib
 EXEC=ffmpeg#executable name
 SOURCES=main.cpp VideoPlayer.cpp
 .DEFAULT_GOAL =help  
@@ -15,7 +15,7 @@ help: script.sh
 compile: $(SOURCES) 		#compiles the program
 	${CPP} ${LDLIBS} ${SOURCES} -o ${EXEC} ${LDFLAGS} -w -g
 	
-run: ${EXEC}			#starts the program
+run: ${EXEC}.exe			#starts the program
 	./${EXEC}
 
 clean:	
