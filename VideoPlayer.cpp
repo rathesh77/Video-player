@@ -29,7 +29,7 @@ int VideoPlayer::loop()
 
         if (avformat_open_input(&format_ctx_input, input_filename, NULL, NULL) != 0)
         {
-            fprintf(stderr, "erreur lors de l'ouverture du fichier");
+            std::cerr << (stderr, "erreur lors de l'ouverture du fichier");
             files.erase(files.begin() + index);
 
             continue;
@@ -45,7 +45,7 @@ int VideoPlayer::loop()
         if (avio_open2(&avio_ctx, output_filename, AVIO_FLAG_WRITE, NULL, NULL) < 0)
         {
 
-            fprintf(stderr, "erreur lors de l'ouverture du fichier de SORTIE...");
+            std::cerr << (stderr, "erreur lors de l'ouverture du fichier de SORTIE...");
             return -1;
         }
         format_ctx_output->pb = avio_ctx;
@@ -236,7 +236,7 @@ bool VideoPlayer::fill_input_codecs(int &videoStream, int &audioStream)
 
     if (avcodec_open2(codec_ctx, codec, NULL) != 0)
     {
-        fprintf(stderr, "erreur lors de l'ouverture du codec");
+        std::cerr << (stderr, "erreur lors de l'ouverture du codec");
         return false;
     }
     return true;
@@ -253,28 +253,27 @@ std::string VideoPlayer::get_file_extension(char *c)
 }
 void VideoPlayer::recursive_roam(std::string parent)
 {
-    struct dirent *ent = NULL;
-    DIR *dir = NULL;
-    if ((dir = opendir(parent.c_str())) != NULL)
+    struct dirent *entry = NULL;
+    DIR *directory = NULL;
+    if ((directory = opendir(parent.c_str())) != NULL)
     {
-        while ((ent = readdir(dir)) != NULL)
+        while ((entry = readdir(directory)) != NULL)
         {
-            std::string p = parent;
-            std::string s = ent->d_name;
-
-            if (s[s.size() - 1] != '.' && ent->d_type == 16)
+            std::string entryName = entry->d_name;
+            char *entryNameLastCharacter = &entryName[entryName.length() - 1];
+            if (*entryNameLastCharacter != '.' && entry->d_type == 16)
             {
-                //std::cout << "Dossier: " + s << std::endl;
-                std::string parent_fold = p + s + '/';
+                //std::cout << "Dossier: " + entryName << std::endl;
+                std::string parent_fold = parent + entryName + '/';
                 recursive_roam(parent_fold);
             }
-            else if (s[s.size() - 1] != '.' && (contains(&s[s.length() - 1], "mp4") || contains(&s[s.length() - 1], "mov") || contains(&s[s.length() - 1], "webm") || contains(&s[s.length() - 1], "mkv")))
+            else if (contains(entryNameLastCharacter, "mp4") || contains(entryNameLastCharacter, "mov") || contains(entryNameLastCharacter, "webm") || contains(entryNameLastCharacter, "mkv"))
             {
                 //std::cout << "\tfichier: " + s << std::endl;
-                files.push_back(p + s);
+                files.push_back(parent + entryName);
             }
         }
-        closedir(dir);
+        closedir(directory);
     }
 }
 void VideoPlayer::free_memory()
