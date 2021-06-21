@@ -43,7 +43,7 @@ private:
 
 public:
     VideoPlayer(char *);
-    bool contains(char *, char *);
+    bool isVideoValid(char *);
     int loop();
     uint64_t timeSinceEpochMillisec();
     std::string get_file_extension(char *c);

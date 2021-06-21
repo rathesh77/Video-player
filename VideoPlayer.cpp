@@ -23,15 +23,12 @@ int VideoPlayer::loop()
         int quit = 0, videoStream = -1, audioStream = -1;
         const char *input_filename = files[index].c_str();
         std::string output = "videos/" + std::to_string(index) + get_file_extension(&files[index][files[index].length() - 1]);
-        const char *output_filename = output.c_str();
-
         alloc_contexts();
 
         if (avformat_open_input(&format_ctx_input, input_filename, NULL, NULL) != 0)
         {
             std::cerr << (stderr, "erreur lors de l'ouverture du fichier");
             files.erase(files.begin() + index);
-
             continue;
         }
 
@@ -40,9 +37,9 @@ int VideoPlayer::loop()
             continue;
         }
         av_dump_format(format_ctx_input, NULL, input_filename, 0);
-        avformat_alloc_output_context2(&format_ctx_output, av_guess_format(NULL, output_filename, NULL), NULL, output_filename);
+        avformat_alloc_output_context2(&format_ctx_output, av_guess_format(NULL, &output[0], NULL), NULL, &output[0]);
 
-        if (avio_open2(&avio_ctx, output_filename, AVIO_FLAG_WRITE, NULL, NULL) < 0)
+        if (avio_open2(&avio_ctx, &output[0], AVIO_FLAG_WRITE, NULL, NULL) < 0)
         {
 
             std::cerr << (stderr, "erreur lors de l'ouverture du fichier de SORTIE...");
@@ -149,20 +146,63 @@ int VideoPlayer::loop()
         }
     }
 }
-bool VideoPlayer::contains(char *str, char *extension)
+bool VideoPlayer::isVideoValid(char *str)
 {
-    int cpt = strlen(extension) - 1;
+    std::string *extensions = new std::string[4]{"mp4", "mov", "webm", "mkv"};
+    int cpt = 0;
+
+    int fails = 0;
     while (*str != '.')
     {
+
         char temp = *str < 'a' && *str > '9' ? (*str) + 32 : *str;
-        if (temp != *(extension + cpt))
-            return false;
-        cpt--;
+        for (int i = 0; i < 4; i++)
+        {
+            std::string currentExtension = *(extensions + i);
+            int currentExtensionLength = currentExtension.length() - 1;
+            if (currentExtensionLength == -1)
+            {
+                continue;
+            }
+            if (currentExtensionLength - cpt < 0 || temp != currentExtension[currentExtensionLength - cpt])
+            {
+                *(extensions + i) = "";
+                fails++;
+            }
+        }
+
+        cpt++;
         str--;
     }
-
-    return true;
+    return fails == 4 ? false : true;
 }
+
+/*
+bool VideoPlayer::isVideoValid(char *str)
+{
+    std::vector<std::string> extensions = {"mp4","mov","webm","mkv"};
+    int cpt = 0;
+  
+    while (*str != '.')
+    {
+            std::cout<<*str;
+
+        char temp = *str < 'a' && *str > '9' ? (*str) + 32 : *str;
+        for ( int i = 0 ; i< extensions.size();i++) {
+            std::string currentExtension = extensions.at(i);
+         
+            int currentExtensionLength = currentExtension.length() - 1;
+            if ( temp != currentExtension[currentExtensionLength-cpt]) {
+                extensions.erase(extensions.begin()+i);
+            }
+        }
+      
+        cpt++;
+        str--;
+    }
+    return  extensions.size() == 0? false : true;
+}
+*/
 uint64_t VideoPlayer::timeSinceEpochMillisec()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -267,9 +307,9 @@ void VideoPlayer::recursive_roam(std::string parent)
                 std::string parent_fold = parent + entryName + '/';
                 recursive_roam(parent_fold);
             }
-            else if (contains(entryNameLastCharacter, "mp4") || contains(entryNameLastCharacter, "mov") || contains(entryNameLastCharacter, "webm") || contains(entryNameLastCharacter, "mkv"))
+            else if (*entryNameLastCharacter != '.' && isVideoValid(entryNameLastCharacter))
             {
-                //std::cout << "\tfichier: " + s << std::endl;
+                //std::cout << "\tfichier: " + entryName << std::endl;
                 files.push_back(parent + entryName);
             }
         }
