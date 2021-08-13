@@ -1,15 +1,18 @@
 #include "VideoPlayer.h"
-
-VideoPlayer::VideoPlayer(char *folder)
+int VideoPlayer::INSTANCIATED = false;
+VideoPlayer::VideoPlayer(std::string folder)
 {
-
-    avcodec_register_all();
-    av_register_all();
-    avfilter_register_all();
-
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER);
-
     recursive_roam(folder);
+}
+VideoPlayer *VideoPlayer::construct(std::string folder)
+{
+    if (INSTANCIATED == false)
+    {
+        VideoPlayer *p = new VideoPlayer(folder);
+        INSTANCIATED = true;
+        return p;
+    }
+    return nullptr;
 }
 int VideoPlayer::loop()
 {
@@ -69,7 +72,7 @@ int VideoPlayer::loop()
         SDL_WM_SetCaption("MP4 Video Player", NULL);
         if (!screen)
         {
-            printf("Unable to set video: %s\n", SDL_GetError());
+            std::cerr << ("Unable to set video: %s\n", SDL_GetError());
             continue;
         }
 

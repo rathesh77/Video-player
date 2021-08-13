@@ -1,5 +1,4 @@
 #include <time.h>
-#include <iostream>
 #include "VideoPlayer.h"
 
 int main(int argc, char **argv)
@@ -9,10 +8,11 @@ int main(int argc, char **argv)
     srand(time(NULL));
 
     std::cout << "entrer un chemin de dossier absolu" << std::endl;
-    char *path;
-    std::cin >> path;
+    std::string s;
+    std::cin >> s;
 
-    VideoPlayer *p = new VideoPlayer(path);
+    VideoPlayer *p = VideoPlayer::construct(s);
+
     p->loop();
 
     return 0;

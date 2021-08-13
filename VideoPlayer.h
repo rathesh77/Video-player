@@ -1,13 +1,12 @@
-#include <time.h>
 #include <vector>
 #include <SDL/SDL.h>
 extern "C"
 {
-#include <libavcodec/avcodec.h>
+//#include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <libavutil/version.h>
+//#include <libavutil/version.h>
 #include <libswscale/swscale.h>
-#include <libavfilter/avfilter.h>
+//#include <libavfilter/avfilter.h>
 }
 #include <windows.h>
 #include <iostream>
@@ -22,6 +21,12 @@ class VideoPlayer
 {
 
 private:
+    static int INSTANCIATED;
+    int index = 0, width = 1024, height = 768;
+    uint64_t timeSinceEpochMillisec();
+    std::string get_file_extension(char *c);
+    std::vector<std::string> files = {};
+
     AVFormatContext *format_ctx_input = NULL, *format_ctx_output = NULL;
     AVCodec *codec = NULL, *codec_audio = NULL;
     AVCodecContext *codec_ctx, *codec_ctx_audio;
@@ -30,21 +35,20 @@ private:
     AVPacket pkt;
     SDL_Rect rect;
     AVStream *stream = NULL, *stream_audio = NULL;
-    std::vector<std::string> files = {};
-    int index = 0, width = 1024, height = 768;
     SDL_Surface *screen = NULL;
+
+    bool fill_input_codecs(int &, int &);
+    bool isVideoValid(char *);
 
     void free_memory();
     void recursive_roam(std::string);
     void alloc_contexts();
     void fill_overlay(SDL_Overlay *, int, uint64_t *, struct SwsContext *, int, int, uint64_t);
-    bool fill_input_codecs(int &, int &);
     void read_inputs(int &);
 
+    VideoPlayer(std::string);
+
 public:
-    VideoPlayer(char *);
-    bool isVideoValid(char *);
+    static VideoPlayer *construct(std::string);
     int loop();
-    uint64_t timeSinceEpochMillisec();
-    std::string get_file_extension(char *c);
 };
